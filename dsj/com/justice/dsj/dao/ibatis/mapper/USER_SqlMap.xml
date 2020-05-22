@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd" >
+<sqlMap namespace="USER}">
+
+	<typeAlias alias="user" type="com.justice.dsj.domain.User" />
+
+	<cacheModel id="oneDayCache" type="OSCACHE">
+		<flushInterval hours="24" />
+		<flushOnExecute statement="insertUser" />
+		<flushOnExecute statement="updateUser" />
+		<flushOnExecute statement="deleteUser" />
+	</cacheModel>
+
+	<resultMap id="userResultForList" class="user">
+		<result column="ID" property="id" jdbcType="DECIMAL" />
+		<result column="USERNAME" property="username" jdbcType="VARCHAR" />
+		<result column="PASSWORD" property="password" jdbcType="VARCHAR" />
+		<result column="EMAIL" property="email" jdbcType="VARCHAR" />
+	</resultMap>
+
+	<resultMap id="userResult" class="user" extends="userResultForList">
+	</resultMap>
+
+	<sql id="sf-user">
+		<isNotEmpty prepend=" and " property="id">ID = #id:DECIMAL#</isNotEmpty>
+		<isNotEmpty prepend=" and " property="username">USERNAME = #username:VARCHAR#</isNotEmpty>
+		<isNotEmpty prepend=" and " property="password">PASSWORD = #password:VARCHAR#</isNotEmpty>
+		<isNotEmpty prepend=" and " property="email">EMAIL = #email:VARCHAR#</isNotEmpty>
+	</sql>
+
+	<select id="selectUser" resultMap="userResult" parameterClass="user" cacheModel="oneDayCache">
+		select * from USER  where 1 = 1
+		<include refid="sf-user" />
+	</select>
+
+	<select id="selectUserList" resultMap="userResultForList" parameterClass="user" cacheModel="oneDayCache">
+		<isNotEmpty property="row.count">
+			<![CDATA[ select * from ( ]]>
+		</isNotEmpty>
+		select * from USER where 1 = 1
+		<include refid="sf-user" />
+		order by ID desc
+		<isNotEmpty property="row.count">
+			<![CDATA[ ) where rownum <= #row.count# ]]>
+		</isNotEmpty>
+	</select>
+
+	<select id="selectUserCount" resultClass="long" parameterClass="user" cacheModel="oneDayCache">
+		select count(*) from USER  where 1 = 1
+		<include refid="sf-user" />
+	</select>
+
+	<select id="selectUserPaginatedList" resultMap="userResult" parameterClass="user" cacheModel="oneDayCache">
+		<![CDATA[ select * from ( select t_.*, rownum rn_ from ( ]]>
+		select * from USER where 1 = 1
+		<include refid="sf-user" />
+		order by ID desc
+		<![CDATA[ ) t_ where rownum <= (#row.first# + #row.count#)) where rn_ >= (#row.first# + 1) ]]>
+	</select>
+
+	<insert id="insertUser" parameterClass="user">
+		<selectKey resultClass="long" keyProperty="id">select S_YW_ZCGL_ASSET_EQUIPMENT.nextval as id from dual </selectKey>
+		<![CDATA[insert into YW_ZCGL_ASSET_EQUIPMENT (]]>
+		<dynamic prepend=" ">
+			<isNotNull prepend="," property="id">ID</isNotNull>	
+			<isNotNull prepend="," property="username">USERNAME</isNotNull>	
+			<isNotNull prepend="," property="password">PASSWORD</isNotNull>	
+			<isNotNull prepend="," property="email">EMAIL</isNotNull>				
+		</dynamic>
+		<![CDATA[) values (]]>
+		<dynamic prepend=" ">
+			<isNotNull prepend="," property="id">#id:DECIMAL#</isNotNull>
+			<isNotNull prepend="," property="username">#username:VARCHAR#</isNotNull>
+			<isNotNull prepend="," property="password">#password:VARCHAR#</isNotNull>
+			<isNotNull prepend="," property="email">#email:VARCHAR#</isNotNull>
+		</dynamic>
+		<![CDATA[)]]>
+	</insert>
+
+	<update id="updateUser" parameterClass="user">
+		update USER
+		<dynamic prepend="set">
+			<isNotNull prepend="," property="id">ID = #id:DECIMAL#</isNotNull>
+			<isNotNull prepend="," property="username">USERNAME = #username:VARCHAR#</isNotNull>
+			<isNotNull prepend="," property="password">PASSWORD = #password:VARCHAR#</isNotNull>
+			<isNotNull prepend="," property="email">EMAIL = #email:VARCHAR#</isNotNull>
+		</dynamic>
+		where
+		<isNotEmpty prepend=" " property="id">ID = #id#</isNotEmpty>
+		<isEmpty prepend=" " property="id">
+			<isNotEmpty prepend=" " property="map.pks">
+				ID in
+				<iterate close=")" open="(" conjunction="," property="map.pks">#map.pks[]#</iterate>
+			</isNotEmpty>
+		</isEmpty>
+	</update>
+
+	<delete id="deleteUser" parameterClass="user">
+		delete from USER where
+		<isNotEmpty prepend=" " property="id">ID = #id#</isNotEmpty>
+		<isEmpty prepend=" " property="id">
+			<isNotEmpty prepend=" " property="map.pks">
+				ID in
+				<iterate close=")" open="(" conjunction="," property="map.pks">#map.pks[]#</iterate>
+			</isNotEmpty>
+		</isEmpty>
+	</delete>
+
+</sqlMap>

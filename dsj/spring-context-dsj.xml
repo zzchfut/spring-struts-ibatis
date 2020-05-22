@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx" xmlns:jee="http://www.springframework.org/schema/jee"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+	http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd 
+	http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-3.0.xsd 
+	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd 
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd"
+	default-autowire="byName">
+
+	<context:component-scan base-package="com.justice.dsj" />
+
+	<context:property-placeholder location="classpath:jdbc.properties" ignore-unresolvable="true" />
+
+	<jee:jndi-lookup id="dataSourceDsj" jndi-name="${jdbc.jndiname.dsj}" resource-ref="true" />
+
+	<bean id="transactionManagerDsj" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSourceDsj" />
+	</bean>
+	
+  <!-- 
+  <bean id="nativeJdbcExtractor" class="org.springframework.jdbc.support.nativejdbc.CommonsDbcpNativeJdbcExtractor" lazy-init="true" />
+  -->
+  
+	<bean id="sqlMapClientDsj" class="org.springframework.orm.ibatis.SqlMapClientFactoryBean">
+		<property name="configLocations">
+			<list>
+				<value>classpath:sqlmap-config-dsj.xml</value>
+			</list>
+		</property>
+		<property name="dataSource" ref="dataSourceDsj" />
+	</bean>
+  <!-- execution(modifiers-pattern? ret-type-pattern declaring-type-pattern? name-pattern(param-pattern)throws-pattern?)
+       more information, reference offical docs. e.g.: 切点，切面，通知，织入，连接点，引入
+   -->
+	<aop:config>
+		<aop:advisor pointcut="execution(* com.justice.dsj.service.*Service.*(..))" advice-ref="txAdviceDsj" />
+	</aop:config>
+
+	<tx:advice id="txAdviceDsj" transaction-manager="transactionManagerDsj">
+		<tx:attributes>
+			<tx:method name="create*" />
+			<tx:method name="modify*" />
+			<tx:method name="remove*" />
+			<tx:method name="*" read-only="true" />
+		</tx:attributes>
+	</tx:advice>
+
+</beans>
